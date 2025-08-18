@@ -11,8 +11,8 @@ public class PassthroughCameraCapture : MonoBehaviour
     [SerializeField] private WebCamTextureManager webCamTextureManager;
     [SerializeField] private TextMeshProUGUI webCamTextureDebugInfo;
     [SerializeField] private TextMeshProUGUI webCamDeviceDebugInfo;
-    [SerializeField] private RawImage webCamRawImage;
-    
+    [SerializeField] private RawImage inputRawImage;
+    [SerializeField] private RawImage outputRawImage;
     
     [SerializeField] private TextMeshProUGUI buttonDebugText;
     [SerializeField] private AudioSource cameraShutter;
@@ -60,8 +60,8 @@ public class PassthroughCameraCapture : MonoBehaviour
             //snapshot2.Apply();
 
             // Show the snapshot on the RawImage
-            webCamRawImage.texture = snapshot1;
-            //webCamRawImage.texture = snapshot2;
+            inputRawImage.texture = snapshot1;
+            //inputRawImage.texture = snapshot2;
             
             // Obtain snapshots and values lists
             snapshots = new List<Texture2D>
@@ -136,5 +136,29 @@ public class PassthroughCameraCapture : MonoBehaviour
         RenderTexture.active = previous;
         RenderTexture.ReleaseTemporary(rt);
         return result;
+    }
+    
+    private void OnEnable()
+    {
+        // Subscribe to the event
+        if (SAM2Api != null)
+            SAM2Api.OnResponseReceived += HandleResponse;
+    }
+
+    private void OnDisable()
+    {
+        // Unsubscribe to avoid memory leaks
+        if (SAM2Api != null)
+            SAM2Api.OnResponseReceived -= HandleResponse;
+    }
+    
+    // This method will be called whenever OnResponseReceived is invoked
+    private void HandleResponse(Texture2D tex)
+    {
+        Debug.Log("Received response texture! Size: " + tex.width + "x" + tex.height);
+
+        // Example: assign to a RawImage in your UI
+        // rawImage.texture = tex;
+        outputRawImage.texture = tex;
     }
 }
