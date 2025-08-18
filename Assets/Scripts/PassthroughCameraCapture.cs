@@ -22,25 +22,31 @@ public class PassthroughCameraCapture : MonoBehaviour
     
     private Texture2D snapshot1;
     private Texture2D snapshot2;
-    private List<Texture2D> snapshots;
-    private List<int[]> values;
+    private List<Texture2D> snapshots = new List<Texture2D>();
+    private List<int[]> values = new List<int[]>();
     
     private Texture2D result; // Texture for resized images
     
     private const int targetWidth = 512; // Target width for resized images
     private const int targetHeight = 512; // Target height for resized images
+
+    private const int aiFrameCap = 2;
+    private bool isCapturing = false;
     
     // Update is called once per frame
     void Update()
     {
         // Example: Spacebar for PC, replace with OVRInput for Quest trigger
-        if (OVRInput.GetDown(OVRInput.Button.One))
+        if (OVRInput.GetDown(OVRInput.Button.One) || isCapturing == true)
         {
             pressCount++;
             Debug.Log("A button pressed!");
             buttonDebugText.text = $"BUTTON PRESSED x{pressCount.ToString()}";
             // DoAction();
-            
+            if (isCapturing == false)
+            {
+                isCapturing = true;
+            }
             CaptureFrame();
         }
     }
@@ -64,19 +70,17 @@ public class PassthroughCameraCapture : MonoBehaviour
             //inputRawImage.texture = snapshot2;
             
             // Obtain snapshots and values lists
-            snapshots = new List<Texture2D>
+
+            snapshots.Add(resizeTexture(snapshot1, targetWidth, targetHeight));
+            values.Add(new [] { 131, 131, 381, 381 });
+
+            if (snapshots.Count == aiFrameCap)
             {
-                //snapshot1,
-                //snapshot2
-                resizeTexture(snapshot1, targetWidth, targetHeight)
-            };
-            values = new List<int[]>
-            {
-                new [] { 231, 231, 281, 281 }
-                //new [] { 640, 480, 880, 600 }
-            };
-            
-            SAM2Api.SendFrames(snapshots, values, targetWidth, targetHeight);
+                SAM2Api.SendFrames(snapshots, values, targetWidth, targetHeight);
+                isCapturing = false;
+                snapshots.Clear();
+                values.Clear();
+            }
 
             cameraShutter.Play();
             webCamTextureDebugInfo.text = $"Snapshot captured at {Time.time:F2}s";
