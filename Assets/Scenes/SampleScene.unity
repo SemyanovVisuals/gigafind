@@ -5587,13 +5587,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1067670725}
   - component: {fileID: 1067670726}
+  - component: {fileID: 1067670727}
   m_Layer: 0
   m_Name: AppManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1067670725
 Transform:
   m_ObjectHideFlags: 0
@@ -5616,12 +5617,24 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1067670724}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5faf443765988194a9a9b565e60c1074, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   buttonDebugText: {fileID: 1639536282}
+--- !u!114 &1067670727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1067670724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c981d004c9146e286720297fcba1327, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1074324266
 GameObject:
   m_ObjectHideFlags: 0
@@ -10945,6 +10958,7 @@ MonoBehaviour:
   webCamRawImage: {fileID: 1220357971}
   buttonDebugText: {fileID: 1639536282}
   cameraShutter: {fileID: 1780741632}
+  SAM2Api: {fileID: 1067670727}
 --- !u!82 &1780741632
 AudioSource:
   m_ObjectHideFlags: 0

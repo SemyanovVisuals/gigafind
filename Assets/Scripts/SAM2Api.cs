@@ -7,22 +7,23 @@ using UnityEngine.Networking;
 
 namespace DefaultNamespace
 {
-    
     public class SAM2Api: MonoBehaviour
     {
-        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
-        [SerializeField] private List<float[]> values = new List<float[]>(); 
+        // [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
+        // [SerializeField] private List<float[]> values = new List<float[]>(); 
         public event Action<Texture2D> OnResponseReceived;
         
-        private string serverUrl = "http://192.168.137.1:8000/boxes";
+        private string serverUrl = "http://172.20.10.4:8000/boxes";
         
-        public void SendFrames()
+        public void SendFrames(List<Texture2D> textures, List<int[]> values, int  targetWidth, int targetHeight)
         {
-            StartCoroutine(UploadFramesAndBbox(textures, values));
+            Debug.Log("SendFrames");
+            StartCoroutine(UploadFramesAndBbox(textures, values, targetWidth, targetHeight));
         }
 
-        private IEnumerator UploadFramesAndBbox(List<Texture2D> frames, List<float[]> bboxCoords)
+        private IEnumerator UploadFramesAndBbox(List<Texture2D> frames, List<int[]> bboxCoords, int  targetWidth, int targetHeight)
         {
+            Debug.Log("UploadFramesAndBbox");
             WWWForm form = new WWWForm();
             string boxBatchStr = string.Join(",", bboxCoords.SelectMany(b => b));
             form.AddField("box_batch_str", boxBatchStr);
@@ -33,10 +34,13 @@ namespace DefaultNamespace
                 byte[] bytes = tex.EncodeToPNG();
                 form.AddBinaryData("frames", bytes, i + ".png", "image/jpeg");
             }
+            Debug.Log("UploadFramesAndBbox after encoding");
 
             using (UnityWebRequest www = UnityWebRequest.Post(serverUrl, form))
             {
+                Debug.Log("Send request");
                 yield return www.SendWebRequest();
+                Debug.Log("Got response");
                 
                 if (www.result != UnityWebRequest.Result.Success)
                 {
@@ -47,7 +51,7 @@ namespace DefaultNamespace
                     Debug.Log("Upload successful! Received " + www.downloadHandler.data.Length + " bytes");
 
                     // Optional: convert response to Texture2D
-                    Texture2D responseTex = new Texture2D(1280, 960);
+                    Texture2D responseTex = new Texture2D(targetWidth, targetHeight);
                     responseTex.LoadImage(www.downloadHandler.data);
 
                     // Notify listeners that the response arrived
