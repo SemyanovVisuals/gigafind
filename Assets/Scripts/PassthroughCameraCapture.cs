@@ -19,6 +19,9 @@ public class PassthroughCameraCapture : MonoBehaviour
     private int pressCount = 0;
     
     [SerializeField] private SAM2Api SAM2Api;
+    [SerializeField] private Canvas helperCanvas;
+
+    //private bool helperActive = true;
     
     private Texture2D snapshot1;
     private Texture2D snapshot2;
@@ -30,7 +33,7 @@ public class PassthroughCameraCapture : MonoBehaviour
     private const int targetWidth = 1280; // Target width for resized images
     private const int targetHeight = 960; // Target height for resized images
 
-    private const int aiFrameCap = 2;
+    private const int aiFrameCap = 5;
     private bool isCapturing = false;
     public Transform p1;
     public Transform p2;
@@ -43,7 +46,11 @@ public class PassthroughCameraCapture : MonoBehaviour
     
     void Update()
     {
-
+        if (OVRInput.GetDown(OVRInput.Button.Two))
+        {
+            helperCanvas.enabled = !helperCanvas.enabled;
+        }
+        
         if (OVRInput.GetDown(OVRInput.Button.One) || isCapturing == true)
         {
             

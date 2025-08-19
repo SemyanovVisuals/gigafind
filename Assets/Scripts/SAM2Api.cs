@@ -12,6 +12,7 @@ namespace DefaultNamespace
         // [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
         // [SerializeField] private List<float[]> values = new List<float[]>(); 
         public event Action<Texture2D> OnResponseReceived;
+        [SerializeField] private Canvas outputCanvas;
         
         private string serverUrl = "http://172.20.10.4:8000/boxes";
         
@@ -23,6 +24,12 @@ namespace DefaultNamespace
 
         private IEnumerator UploadFramesAndBbox(List<Texture2D> frames, List<int[]> bboxCoords, int  targetWidth, int targetHeight)
         {
+            var outputWidth = bboxCoords[0][2] - bboxCoords[0][0];  // right x - left x
+            var outputHeight = bboxCoords[0][3] - bboxCoords[0][1];    // right y - left y
+            Debug.Log("Output width: " + outputWidth + ", output height: " + outputHeight);
+            RectTransform rt = outputCanvas.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(outputWidth, outputHeight);
+            
             Debug.Log("UploadFramesAndBbox");
             WWWForm form = new WWWForm();
             string boxBatchStr = string.Join(",", bboxCoords.SelectMany(b => b));
@@ -51,7 +58,9 @@ namespace DefaultNamespace
                     Debug.Log("Upload successful! Received " + www.downloadHandler.data.Length + " bytes");
 
                     // Optional: convert response to Texture2D
-                    Texture2D responseTex = new Texture2D(targetWidth, targetHeight);
+                    
+                    Texture2D responseTex = new Texture2D(outputWidth, outputHeight);
+                    //Texture2D responseTex = new Texture2D(targetWidth, targetHeight);
                     responseTex.LoadImage(www.downloadHandler.data);
 
                     // Notify listeners that the response arrived
