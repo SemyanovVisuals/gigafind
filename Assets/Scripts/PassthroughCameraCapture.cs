@@ -40,76 +40,6 @@ public class PassthroughCameraCapture : MonoBehaviour
     private bool rectangleValid;
     
     private WebCamTexture _webcamTexture;
-    // Update is called once per frame
-    // void Update()
-    // {
-    //     // Example: Spacebar for PC, replace with OVRInput for Quest trigger
- 
-    //     // --- NEW PART: project controllers into left-eye camera plane ---
-    //     if (OVRInput.GetDown(OVRInput.Button.One))
-    //     {
-    //         // use p1 and p2 to get location ON webCamTextureManager.WebCamTexture here
-    //         Vector2 pixel1 = WorldToPassthroughPixel(p1);
-    //         Vector2 pixel2 = WorldToPassthroughPixel(p2);
-    //
-    //         Vector2 topLeft = new Vector2(Mathf.Min(pixel1.x, pixel2.x), Mathf.Min(pixel1.y, pixel2.y));
-    //         Vector2 bottomRight = new Vector2(Mathf.Max(pixel1.x, pixel2.x), Mathf.Max(pixel1.y, pixel2.y));
-    //
-    //         Debug.Log($"Projected rectangle: TopLeft={topLeft}, BottomRight={bottomRight}");
-    //         
-    //
-    //     }
-    // }
-    // private Vector2 WorldToPassthroughPixel(Transform point)
-    // {
-    //     if (webCamTextureManager == null || webCamTextureManager.WebCamTexture == null)
-    //         return Vector2.zero;
-    //
-    //     // Use the actual left-eye camera transform
-    //     Transform leftEyeCamera = webCamTextureManager.transform; // replace with actual LeftEyeAnchor if needed
-    //
-    //     // Get camera intrinsics
-    //     var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(webCamTextureManager.Eye);
-    //
-    //     // Convert world position to camera space
-    //     Vector3 camSpace = leftEyeCamera.worldToLocalMatrix.MultiplyPoint(point.position);
-    //
-    //     if (camSpace.z <= 0.01f)
-    //     {
-    //         Debug.LogWarning("Point is behind or too close to the camera! z=" + camSpace.z);
-    //         camSpace.z = 0.01f; // avoid division by zero
-    //     }
-    //
-    //     // If intrinsics are normalized, convert to pixels
-    //     float fx = intrinsics.FocalLength.x;
-    //     float fy = intrinsics.FocalLength.y;
-    //     float cx = intrinsics.PrincipalPoint.x;
-    //     float cy = intrinsics.PrincipalPoint.y;
-    //
-    //     if (cx <= 1f && cy <= 1f) // normalized
-    //     {
-    //         cx *= intrinsics.Resolution.x;
-    //         cy *= intrinsics.Resolution.y;
-    //         fx *= intrinsics.Resolution.x;
-    //         fy *= intrinsics.Resolution.y;
-    //     }
-    //
-    //     // Project
-    //     float u = fx * (camSpace.x / camSpace.z) + cx;
-    //     float v = fy * (camSpace.y / camSpace.z) + cy;
-    //
-    //     // Flip v for top-left origin
-    //     v = intrinsics.Resolution.y - v;
-    //
-    //     // Clamp to texture bounds
-    //     u = Mathf.Clamp(u, 0, intrinsics.Resolution.x);
-    //     v = Mathf.Clamp(v, 0, intrinsics.Resolution.y);
-    //     
-    //     Vector3 camSpace = leftEyeCamera.worldToLocalMatrix.MultiplyPoint(point.position);
-    //     Debug.Log($"{point.name} camSpace = {camSpace}");
-    //
-    //     return new Vector2(u, v);
-    // }
     
     void Update()
     {
@@ -147,7 +77,7 @@ public class PassthroughCameraCapture : MonoBehaviour
             // Optional: visualize on a UI RawImage
         }
     }
-
+    
     private Vector2 WorldToTextureXY(Vector3 worldPoint)
     {
         var cameraPose = PassthroughCameraUtils.GetCameraPoseInWorld(webCamTextureManager.Eye);
@@ -156,27 +86,30 @@ public class PassthroughCameraCapture : MonoBehaviour
 
         if (localPoint.z <= 0.0001f)
         {
-            Debug.LogWarning("ColorPicker: Point too close.");
+            Debug.LogWarning("Point too close to camera!");
             return Vector2.zero;
         }
 
-        var scaleX = _webcamTexture.width / (float)intrinsics.Resolution.x;
-        var scaleY = _webcamTexture.height / (float)intrinsics.Resolution.y;
+        // Project to image plane (note inverted y)
+        float uPixel = intrinsics.FocalLength.x * (localPoint.x / localPoint.z) + intrinsics.PrincipalPoint.x;
+        float vPixel = intrinsics.FocalLength.y * (-localPoint.y / localPoint.z) + intrinsics.PrincipalPoint.y;
 
-        var uPixel = intrinsics.FocalLength.x * (localPoint.x / localPoint.z) + intrinsics.PrincipalPoint.x;
-        var vPixel = intrinsics.FocalLength.y * (localPoint.y / localPoint.z) + intrinsics.PrincipalPoint.y;
+        // Optional: scale if intrinsics.Resolution != WebCamTexture resolution
+        if (intrinsics.Resolution.x != _webcamTexture.width || intrinsics.Resolution.y != _webcamTexture.height)
+        {
+            float scaleX = _webcamTexture.width / (float)intrinsics.Resolution.x;
+            float scaleY = _webcamTexture.height / (float)intrinsics.Resolution.y;
+            uPixel *= scaleX;
+            vPixel *= scaleY;
+        }
 
-        uPixel *= scaleX;
-        vPixel *= scaleY;
+        // Clamp to valid pixel coordinates
+        int x = Mathf.Clamp(Mathf.RoundToInt(uPixel), 0, _webcamTexture.width - 1);
+        int y = Mathf.Clamp(Mathf.RoundToInt(vPixel), 0, _webcamTexture.height - 1);
 
-        var u = uPixel / _webcamTexture.width;
-        var v = vPixel / _webcamTexture.height;
-        
-        var x = Mathf.Clamp(Mathf.RoundToInt(u * _webcamTexture.width), 0, _webcamTexture.width - 1);
-        var y = Mathf.Clamp(Mathf.RoundToInt(v * _webcamTexture.height), 0, _webcamTexture.height - 1);
-        
         return new Vector2(x, y);
     }
+
 
     private void CaptureFrame(int[] box)
     {
