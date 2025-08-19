@@ -11,7 +11,7 @@ namespace DefaultNamespace
     {
         // [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
         // [SerializeField] private List<float[]> values = new List<float[]>(); 
-        public event Action<Texture2D> OnResponseReceived;
+        public event Action<(Texture2D texture, string name)> OnResponseReceived;
         [SerializeField] private Canvas outputCanvas;
         
         private string serverUrl = "http://172.20.10.4:8000/boxes";
@@ -62,9 +62,12 @@ namespace DefaultNamespace
                     Texture2D responseTex = new Texture2D(outputWidth, outputHeight);
                     //Texture2D responseTex = new Texture2D(targetWidth, targetHeight);
                     responseTex.LoadImage(www.downloadHandler.data);
+                    string llmText = www.GetResponseHeader("x-llm-text");
+                    
+                    var texWithString = (texture: responseTex, llmText: llmText);
 
                     // Notify listeners that the response arrived
-                    OnResponseReceived?.Invoke(responseTex);
+                    OnResponseReceived?.Invoke(texWithString);
                 }
             }
         }

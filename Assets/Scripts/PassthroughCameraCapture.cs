@@ -20,6 +20,9 @@ public class PassthroughCameraCapture : MonoBehaviour
     
     [SerializeField] private SAM2Api SAM2Api;
     [SerializeField] private Canvas helperCanvas;
+    [SerializeField] private TextMeshProUGUI outputTmp;
+    [SerializeField] private GameObject outputImgCanvas;
+    [SerializeField] private GameObject outputTxtCanvas;
 
     //private bool helperActive = true;
     
@@ -225,12 +228,24 @@ public class PassthroughCameraCapture : MonoBehaviour
     }
     
     // This method will be called whenever OnResponseReceived is invoked
-    private void HandleResponse(Texture2D tex)
+    private void HandleResponse((Texture2D texture, string llmText) data)
     {
-        Debug.Log("Received response texture! Size: " + tex.width + "x" + tex.height);
+        var tex = data.texture;
+        var llmText = data.llmText;
+        Debug.Log("Received response texture! Size: " + tex.width + "x" + tex.height + llmText);
 
         // Example: assign to a RawImage in your UI
         // rawImage.texture = tex;
         outputRawImage.texture = tex;
+        outputTmp.text = llmText;
+
+        // if (!outputImgCanvas.activeSelf)
+        // {
+        //     outputImgCanvas.SetActive(true);
+        // }
+        // if (!outputTxtCanvas.activeSelf)
+        // {
+        //     outputTxtCanvas.SetActive(true);
+        // }
     }
 }
