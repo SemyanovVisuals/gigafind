@@ -27,18 +27,113 @@ public class PassthroughCameraCapture : MonoBehaviour
     
     private Texture2D result; // Texture for resized images
     
-    private const int targetWidth = 512; // Target width for resized images
-    private const int targetHeight = 512; // Target height for resized images
+    private const int targetWidth = 1280; // Target width for resized images
+    private const int targetHeight = 960; // Target height for resized images
 
     private const int aiFrameCap = 2;
     private bool isCapturing = false;
+    public Transform p1;
+    public Transform p2;
     
+    private Vector2 screenTopLeft;
+    private Vector2 screenBottomRight;
+    private bool rectangleValid;
+    
+    private WebCamTexture _webcamTexture;
     // Update is called once per frame
+    // void Update()
+    // {
+    //     // Example: Spacebar for PC, replace with OVRInput for Quest trigger
+ 
+    //     // --- NEW PART: project controllers into left-eye camera plane ---
+    //     if (OVRInput.GetDown(OVRInput.Button.One))
+    //     {
+    //         // use p1 and p2 to get location ON webCamTextureManager.WebCamTexture here
+    //         Vector2 pixel1 = WorldToPassthroughPixel(p1);
+    //         Vector2 pixel2 = WorldToPassthroughPixel(p2);
+    //
+    //         Vector2 topLeft = new Vector2(Mathf.Min(pixel1.x, pixel2.x), Mathf.Min(pixel1.y, pixel2.y));
+    //         Vector2 bottomRight = new Vector2(Mathf.Max(pixel1.x, pixel2.x), Mathf.Max(pixel1.y, pixel2.y));
+    //
+    //         Debug.Log($"Projected rectangle: TopLeft={topLeft}, BottomRight={bottomRight}");
+    //         
+    //
+    //     }
+    // }
+    // private Vector2 WorldToPassthroughPixel(Transform point)
+    // {
+    //     if (webCamTextureManager == null || webCamTextureManager.WebCamTexture == null)
+    //         return Vector2.zero;
+    //
+    //     // Use the actual left-eye camera transform
+    //     Transform leftEyeCamera = webCamTextureManager.transform; // replace with actual LeftEyeAnchor if needed
+    //
+    //     // Get camera intrinsics
+    //     var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(webCamTextureManager.Eye);
+    //
+    //     // Convert world position to camera space
+    //     Vector3 camSpace = leftEyeCamera.worldToLocalMatrix.MultiplyPoint(point.position);
+    //
+    //     if (camSpace.z <= 0.01f)
+    //     {
+    //         Debug.LogWarning("Point is behind or too close to the camera! z=" + camSpace.z);
+    //         camSpace.z = 0.01f; // avoid division by zero
+    //     }
+    //
+    //     // If intrinsics are normalized, convert to pixels
+    //     float fx = intrinsics.FocalLength.x;
+    //     float fy = intrinsics.FocalLength.y;
+    //     float cx = intrinsics.PrincipalPoint.x;
+    //     float cy = intrinsics.PrincipalPoint.y;
+    //
+    //     if (cx <= 1f && cy <= 1f) // normalized
+    //     {
+    //         cx *= intrinsics.Resolution.x;
+    //         cy *= intrinsics.Resolution.y;
+    //         fx *= intrinsics.Resolution.x;
+    //         fy *= intrinsics.Resolution.y;
+    //     }
+    //
+    //     // Project
+    //     float u = fx * (camSpace.x / camSpace.z) + cx;
+    //     float v = fy * (camSpace.y / camSpace.z) + cy;
+    //
+    //     // Flip v for top-left origin
+    //     v = intrinsics.Resolution.y - v;
+    //
+    //     // Clamp to texture bounds
+    //     u = Mathf.Clamp(u, 0, intrinsics.Resolution.x);
+    //     v = Mathf.Clamp(v, 0, intrinsics.Resolution.y);
+    //     
+    //     Vector3 camSpace = leftEyeCamera.worldToLocalMatrix.MultiplyPoint(point.position);
+    //     Debug.Log($"{point.name} camSpace = {camSpace}");
+    //
+    //     return new Vector2(u, v);
+    // }
+    
     void Update()
     {
-        // Example: Spacebar for PC, replace with OVRInput for Quest trigger
+
         if (OVRInput.GetDown(OVRInput.Button.One) || isCapturing == true)
         {
+            
+            _webcamTexture = webCamTextureManager.WebCamTexture;
+            // --- Project controllers into left-eye camera plane ---
+            Vector2 pixel1 = WorldToTextureXY(p1.position);
+            Vector2 pixel2 = WorldToTextureXY(p2.position);
+
+            // Compute top-left and bottom-right in pixel coordinates
+            Vector2 topLeft = new Vector2(
+                Mathf.Min(pixel1.x, pixel2.x),
+                Mathf.Min(pixel1.y, pixel2.y)
+            );
+            Vector2 bottomRight = new Vector2(
+                Mathf.Max(pixel1.x, pixel2.x),
+                Mathf.Max(pixel1.y, pixel2.y)
+            );
+
+            var box = new[] { (int)topLeft.x, (int)topLeft.y, (int)bottomRight.x, (int)bottomRight.y };
+            rectangleValid = true;
             pressCount++;
             Debug.Log("A button pressed!");
             buttonDebugText.text = $"BUTTON PRESSED x{pressCount.ToString()}";
@@ -47,11 +142,43 @@ public class PassthroughCameraCapture : MonoBehaviour
             {
                 isCapturing = true;
             }
-            CaptureFrame();
+            CaptureFrame(box);
+
+            // Optional: visualize on a UI RawImage
         }
     }
 
-    private void CaptureFrame()
+    private Vector2 WorldToTextureXY(Vector3 worldPoint)
+    {
+        var cameraPose = PassthroughCameraUtils.GetCameraPoseInWorld(webCamTextureManager.Eye);
+        var localPoint = Quaternion.Inverse(cameraPose.rotation) * (worldPoint - cameraPose.position);
+        var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(webCamTextureManager.Eye);
+
+        if (localPoint.z <= 0.0001f)
+        {
+            Debug.LogWarning("ColorPicker: Point too close.");
+            return Vector2.zero;
+        }
+
+        var scaleX = _webcamTexture.width / (float)intrinsics.Resolution.x;
+        var scaleY = _webcamTexture.height / (float)intrinsics.Resolution.y;
+
+        var uPixel = intrinsics.FocalLength.x * (localPoint.x / localPoint.z) + intrinsics.PrincipalPoint.x;
+        var vPixel = intrinsics.FocalLength.y * (localPoint.y / localPoint.z) + intrinsics.PrincipalPoint.y;
+
+        uPixel *= scaleX;
+        vPixel *= scaleY;
+
+        var u = uPixel / _webcamTexture.width;
+        var v = vPixel / _webcamTexture.height;
+        
+        var x = Mathf.Clamp(Mathf.RoundToInt(u * _webcamTexture.width), 0, _webcamTexture.width - 1);
+        var y = Mathf.Clamp(Mathf.RoundToInt(v * _webcamTexture.height), 0, _webcamTexture.height - 1);
+        
+        return new Vector2(x, y);
+    }
+
+    private void CaptureFrame(int[] box)
     {
         Debug.Log("CaptureFrame");
         WebCamTexture camTex = webCamTextureManager.WebCamTexture;
@@ -71,8 +198,9 @@ public class PassthroughCameraCapture : MonoBehaviour
             
             // Obtain snapshots and values lists
 
-            snapshots.Add(resizeTexture(snapshot1, targetWidth, targetHeight));
-            values.Add(new [] { 131, 131, 381, 381 });
+            // snapshots.Add(resizeTexture(snapshot1, targetWidth, targetHeight));
+            snapshots.Add(snapshot1);
+            values.Add(box);
 
             if (snapshots.Count == aiFrameCap)
             {
@@ -80,9 +208,9 @@ public class PassthroughCameraCapture : MonoBehaviour
                 isCapturing = false;
                 snapshots.Clear();
                 values.Clear();
+                cameraShutter.Play();
             }
-
-            cameraShutter.Play();
+            
             webCamTextureDebugInfo.text = $"Snapshot captured at {Time.time:F2}s";
         }
         else
@@ -128,19 +256,19 @@ public class PassthroughCameraCapture : MonoBehaviour
         // );
     }
     
-    private Texture2D resizeTexture(Texture2D source, int targetWidth, int targetHeight)
-    {
-        var rt = RenderTexture.GetTemporary(targetWidth, targetHeight);
-        rt.filterMode = FilterMode.Bilinear;
-        var previous = RenderTexture.active;
-        RenderTexture.active = rt;
-        Graphics.Blit(source, rt);
-        result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
-        result.Apply();
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(rt);
-        return result;
-    }
+    // private Texture2D resizeTexture(Texture2D source, int targetWidth, int targetHeight)
+    // {
+    //     var rt = RenderTexture.GetTemporary(targetWidth, targetHeight);
+    //     rt.filterMode = FilterMode.Bilinear;
+    //     var previous = RenderTexture.active;
+    //     RenderTexture.active = rt;
+    //     Graphics.Blit(source, rt);
+    //     result.ReadPixels(new Rect(0, 0, targetWidth, targetHeight), 0, 0);
+    //     result.Apply();
+    //     RenderTexture.active = previous;
+    //     RenderTexture.ReleaseTemporary(rt);
+    //     return result;
+    // }
     
     private void OnEnable()
     {
