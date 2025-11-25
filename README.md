@@ -39,6 +39,6 @@ SAM2, Hugging Face, Groq LLM
 OpenCV (cv2), Matplotlib
 MaskGen, UnityWebRequest
 
-### Demo
+### Trailer
 [![Demo Video](https://img.youtube.com/vi/VKBsvkuEDrY/0.jpg)](https://youtube.com/shorts/VKBsvkuEDrY)
 
