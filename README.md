@@ -30,7 +30,7 @@ Gigafind enables users to select an object in the real world by marking two corn
 - Demonstrated a practical XR-based workflow for interactive segmentation, a capability not commonly explored in real-time XR applications.
 
 ### Future Work
-Gigafind could evolve into a tool for professionals working with complex machinery, electronics, or training systems—where rapid component identification and labeling can improve accuracy and efficiency. The system may also support future multimodal CV tasks requiring high-quality labeled data.
+Gigafind could evolve into a tool for professionals working with complex machinery, electronics, or training systems, where rapid component identification and labeling can improve accuracy and efficiency. The system may also support future multimodal CV tasks requiring high-quality labeled data.
 
 ### Tech Stack
 Unity, C#, Meta XR SDK, Mixed Reality, Passthrough Camera API (PCA)
