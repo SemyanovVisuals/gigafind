@@ -9,7 +9,7 @@ Gigafind enables users to select an object in the real world by marking two corn
 ### Hardware / Software Setup
 - Headset: Meta Quest 3
 - Client (Unity/MR): Lenovo Yoga Pro 9i (RTX 4060)
-- Inference Server: MacBook Pro M1 Max
+- Inference Server (SAM2): MacBook Pro M1 Max
 - Frameworks: Unity, FastAPI, PyTorch, Meta XR SDK
 
 ### Data Pipeline
@@ -17,7 +17,7 @@ Gigafind enables users to select an object in the real world by marking two corn
 - Frames and bounding boxes are sent to a FastAPI server hosting a SAM2 segmentation model.
 - The model produces three candidate masks; the highest-confidence mask is selected and cropped.
 - The cropped mask is sent to the Groq LLM API to produce a short textual description.
-- The final mask and description are returned to the device and displayed on a UI canvas.
+- The final 2D mask and description are returned to the device and displayed on a UI canvas.
 
 ### Challenges
 - Passthrough access on Quest: Standalone APKs limited direct camera access; data transfer required using UnityWebRequest over a hotspot connection. Windows hotspot routing caused latency; iPhone hotspot performed reliably.
@@ -32,8 +32,8 @@ Gigafind enables users to select an object in the real world by marking two corn
 ### Future Work
 Gigafind could evolve into a tool for professionals working with complex machinery, electronics, or training systems—where rapid component identification and labeling can improve accuracy and efficiency. The system may also support future multimodal CV tasks requiring high-quality labeled data.
 
-### Technologies Used
-Unity, C#, Meta XR SDK, Mixed Reality, Passthrough Camera API
+### Tech Stack
+Unity, C#, Meta XR SDK, Mixed Reality, Passthrough Camera API (PCA)
 Python, FastAPI, PyTorch
 SAM2, Hugging Face, Groq LLM
 OpenCV (cv2), Matplotlib
