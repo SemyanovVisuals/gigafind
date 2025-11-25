@@ -6,8 +6,7 @@ This project integrates extended reality interaction with modern segmentation mo
 
 Gigafind enables users to select an object in the real world by marking two corner points with VR controllers. The system captures several passthrough camera frames, performs segmentation on a remote server, and returns both a refined 2D mask and a concise textual description of the selected object. The project explores how XR interfaces can enhance computer vision workflows for technical environments where quick identification of components is valuable.
 
-### System Architecture
-- Hardware / Software Setup
+### Hardware / Software Setup
 - Headset: Meta Quest 3
 - Client (Unity/MR): Lenovo Yoga Pro 9i (RTX 4060)
 - Inference Server: MacBook Pro M1 Max
