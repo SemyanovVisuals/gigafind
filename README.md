@@ -1,6 +1,6 @@
 # Gigafind
 
-This project integrates extended reality interaction with modern segmentation models to enable real-time object identification using controller-defined bounding regions on the Meta Quest 3.
+This project uses XR interaction and modern segmentation models to generate real-time “stickers” and object descriptions from controller-defined regions on the Meta Quest 3.
 
 ### Overview
 
