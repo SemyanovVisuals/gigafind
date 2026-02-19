@@ -1,4 +1,5 @@
 # Gigafind 📓
+*for SensAI Hack Cologne 2025*
 
 This project uses XR interaction and modern segmentation models to generate real-time “stickers” and object descriptions from controller-defined regions on the Meta Quest 3.
 
